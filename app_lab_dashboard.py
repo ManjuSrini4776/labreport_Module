@@ -1,18 +1,53 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
-# ============================================
-# Page Config
-# ============================================
+# ==========================================================
+# PAGE CONFIG
+# ==========================================================
 
 st.set_page_config(
-    page_title="Lab Severity Module",
+    page_title="Chronic OPD Lab Severity",
     layout="wide"
 )
 
-# ============================================
-# Load Data
-# ============================================
+# ==========================================================
+# CUSTOM STYLING (Professional Clinical Theme)
+# ==========================================================
+
+st.markdown("""
+<style>
+.main-title {
+    font-size: 42px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 10px;
+}
+.section-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+.info-box {
+    padding: 18px;
+    border-radius: 10px;
+    background-color: #111827;
+    border: 1px solid #374151;
+}
+.metric-card {
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================================================
+# LOAD DATA
+# ==========================================================
 
 @st.cache_data
 def load_data():
@@ -20,123 +55,163 @@ def load_data():
 
 df = load_data()
 
-# ============================================
-# Sidebar - Patient Selection
-# ============================================
+# ==========================================================
+# SIDEBAR – PATIENT SELECTION
+# ==========================================================
 
-st.sidebar.title("🔎 Select Patient Admission")
-
-hadm_list = df['hadm_id'].unique()
+st.sidebar.title("Patient Selection")
 
 selected_hadm = st.sidebar.selectbox(
     "Admission ID",
-    hadm_list
+    df["hadm_id"].unique()
 )
 
-patient = df[df['hadm_id'] == selected_hadm].iloc[0]
+patient = df[df["hadm_id"] == selected_hadm].iloc[0]
 
-# ============================================
-# Title
-# ============================================
+# ==========================================================
+# MAIN TITLE
+# ==========================================================
 
-st.markdown(
-    "<h1 style='text-align: center; color: #2C3E50;'>Chronic OPD Lab Severity Dashboard</h1>",
-    unsafe_allow_html=True
-)
-
+st.markdown("<div class='main-title'>Chronic OPD Lab Severity Dashboard</div>", unsafe_allow_html=True)
 st.markdown("---")
 
-# ============================================
-# Top Patient Summary Section
-# ============================================
+# ==========================================================
+# SECTION 1 – PATIENT PROFILE
+# ==========================================================
 
-col1, col2 = st.columns([1,2])
+st.markdown("<div class='section-title'>Patient Profile</div>", unsafe_allow_html=True)
+
+col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.markdown("### 🧾 Patient Information")
-    st.markdown(f"**Subject ID:** {patient['subject_id']}")
-    st.markdown(f"**Admission ID:** {patient['hadm_id']}")
+    st.markdown("<div class='info-box'>", unsafe_allow_html=True)
+    st.write(f"**Subject ID:** {patient['subject_id']}")
+    st.write(f"**Admission ID:** {patient['hadm_id']}")
 
-    # Disease Badges
     diseases = []
-    if patient['has_ckd']:
-        diseases.append("🩺 CKD")
-    if patient['has_diabetes']:
-        diseases.append("🩸 Diabetes")
-    if patient['has_thyroid']:
-        diseases.append("🧬 Thyroid")
+    if patient["has_ckd"]:
+        diseases.append("CKD")
+    if patient["has_diabetes"]:
+        diseases.append("Diabetes")
+    if patient["has_thyroid"]:
+        diseases.append("Thyroid")
 
     if diseases:
-        st.markdown("**Chronic Conditions:**")
-        st.markdown(" | ".join(diseases))
+        st.write("**Chronic Conditions:**")
+        st.write(" | ".join(diseases))
     else:
-        st.markdown("No chronic disease recorded.")
+        st.write("No chronic disease identified")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 with col2:
-    st.markdown("### 📊 Severity Summary")
+    severity = patient["final_severity_label"]
+    score = patient["final_severity_score"]
 
-    severity = patient['final_severity_label']
-    score = patient['final_severity_score']
+    color_map = {
+        "Stable": "#2ECC71",
+        "Mild": "#F1C40F",
+        "Moderate": "#E67E22",
+        "Severe": "#E74C3C",
+        "Unknown": "#6B7280"
+    }
 
-    if severity == "Stable":
-        color = "#2ECC71"
-    elif severity == "Mild":
-        color = "#F1C40F"
-    elif severity == "Moderate":
-        color = "#E67E22"
-    elif severity == "Severe":
-        color = "#E74C3C"
-    else:
-        color = "#95A5A6"
+    box_color = color_map.get(severity, "#6B7280")
 
     st.markdown(
         f"""
-        <div style="
-            padding: 30px;
-            border-radius: 12px;
-            background-color: {color};
-            color: white;
-            text-align: center;
-            font-size: 28px;
-            font-weight: bold;">
-            {severity} (Score: {score})
+        <div class='metric-card' style='background-color:{box_color}; color:white;'>
+            {severity} <br>
+            Severity Score: {score}
         </div>
         """,
         unsafe_allow_html=True
     )
 
-st.markdown("---")
+# ==========================================================
+# SECTION 2 – INDIVIDUAL DISEASE SEVERITY
+# ==========================================================
 
-# ============================================
-# Individual Disease Severity
-# ============================================
+st.markdown("<div class='section-title'>Individual Disease Severity</div>", unsafe_allow_html=True)
 
-st.markdown("## 🧪 Individual Disease Severity")
+c1, c2, c3 = st.columns(3)
 
-col1, col2, col3 = st.columns(3)
+with c1:
+    st.markdown("<div class='info-box'>", unsafe_allow_html=True)
+    st.write("**CKD Severity**")
+    st.write(patient.get("ckd_severity", "N/A"))
+    st.markdown("</div>", unsafe_allow_html=True)
 
-with col1:
-    st.markdown("### CKD")
-    st.info(str(patient.get('ckd_severity', 'N/A')))
+with c2:
+    st.markdown("<div class='info-box'>", unsafe_allow_html=True)
+    st.write("**Diabetes Severity**")
+    st.write(patient.get("diabetes_severity_final", "N/A"))
+    st.markdown("</div>", unsafe_allow_html=True)
 
-with col2:
-    st.markdown("### Diabetes")
-    st.info(str(patient.get('diabetes_severity_final', 'N/A')))
+with c3:
+    st.markdown("<div class='info-box'>", unsafe_allow_html=True)
+    st.write("**Thyroid Severity**")
+    st.write(patient.get("thyroid_severity_final", "N/A"))
+    st.markdown("</div>", unsafe_allow_html=True)
 
-with col3:
-    st.markdown("### Thyroid")
-    st.info(str(patient.get('thyroid_severity_final', 'N/A')))
+# ==========================================================
+# SECTION 3 – COHORT DISTRIBUTION (MULTICOLOR)
+# ==========================================================
 
-st.markdown("---")
-
-# ============================================
-# Cohort Distribution
-# ============================================
-
-st.markdown("## 📈 Cohort Severity Distribution")
+st.markdown("<div class='section-title'>Cohort Severity Distribution</div>", unsafe_allow_html=True)
 
 order = ["Stable", "Mild", "Moderate", "Severe", "Unknown"]
 
-distribution = df['final_severity_label'].value_counts().reindex(order)
+distribution = (
+    df["final_severity_label"]
+    .value_counts()
+    .reindex(order)
+    .reset_index()
+)
 
-st.bar_chart(distribution)
+distribution.columns = ["Severity", "Count"]
+
+color_map = {
+    "Stable": "#2ECC71",
+    "Mild": "#F1C40F",
+    "Moderate": "#E67E22",
+    "Severe": "#E74C3C",
+    "Unknown": "#6B7280"
+}
+
+fig = px.bar(
+    distribution,
+    x="Severity",
+    y="Count",
+    color="Severity",
+    text="Count",
+    color_discrete_map=color_map
+)
+
+fig.update_layout(
+    template="plotly_dark",
+    showlegend=False,
+    xaxis_title="Severity Level",
+    yaxis_title="Number of Admissions",
+    font=dict(size=14)
+)
+
+fig.update_traces(textposition="outside")
+
+st.plotly_chart(fig, use_container_width=True)
+
+# ==========================================================
+# SECTION 4 – DATA COVERAGE SUMMARY
+# ==========================================================
+
+st.markdown("<div class='section-title'>Data Coverage Summary</div>", unsafe_allow_html=True)
+
+total = len(df)
+available = df["final_severity_label"].notna().sum()
+coverage = round((available / total) * 100, 2)
+
+colA, colB, colC = st.columns(3)
+
+colA.metric("Total Chronic Admissions", total)
+colB.metric("Severity Available", available)
+colC.metric("Coverage (%)", coverage)
