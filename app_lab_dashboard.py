@@ -3,7 +3,7 @@ import pandas as pd
 
 @st.cache_data
 def load_data():
-    return pd.read_parquet("LAB_MODULE_FUSION_INPUT.parquet")
+    return pd.read_parquet("NB06_MULTIMODAL_SEVERITY_FUSION.parquet")
 
 df = load_data()
 
