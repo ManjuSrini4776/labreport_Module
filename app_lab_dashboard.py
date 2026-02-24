@@ -2,43 +2,42 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# ==========================================================
+# =====================================================
 # PAGE CONFIG
-# ==========================================================
+# =====================================================
 
 st.set_page_config(
     page_title="Chronic OPD Lab Severity",
     layout="wide"
 )
 
-# ==========================================================
-# GLOBAL FONT & STYLE (Professional Look)
-# ==========================================================
+# =====================================================
+# PROFESSIONAL FONT (Times New Roman)
+# =====================================================
 
 st.markdown("""
 <style>
-body {
-    font-family: 'Segoe UI', sans-serif;
+html, body, [class*="css"]  {
+    font-family: 'Times New Roman', serif;
 }
-.big-title {
-    font-size: 48px;
-    font-weight: 700;
+.main-title {
+    font-size: 46px;
+    font-weight: bold;
 }
 .section-title {
     font-size: 32px;
-    font-weight: 600;
-    margin-bottom: 20px;
+    font-weight: bold;
+    margin-top: 25px;
 }
-.metric-large {
-    font-size: 28px;
-    font-weight: 600;
+.big-text {
+    font-size: 26px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================================
+# =====================================================
 # LOAD DATA
-# ==========================================================
+# =====================================================
 
 @st.cache_data
 def load_data():
@@ -46,16 +45,16 @@ def load_data():
 
 df = load_data()
 
-# ==========================================================
+# =====================================================
 # HEADER
-# ==========================================================
+# =====================================================
 
-st.markdown("<div class='big-title'>Chronic OPD Laboratory Severity Analysis</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-title'>Chronic OPD Laboratory Severity Analysis</div>", unsafe_allow_html=True)
 st.markdown("---")
 
-# ==========================================================
-# SIDEBAR – PATIENT SELECT
-# ==========================================================
+# =====================================================
+# SIDEBAR SELECTION
+# =====================================================
 
 selected_hadm = st.sidebar.selectbox(
     "Select Admission ID",
@@ -64,69 +63,49 @@ selected_hadm = st.sidebar.selectbox(
 
 patient = df[df["hadm_id"] == selected_hadm].iloc[0]
 
-# ==========================================================
-# TABS (Separate Visual Sections)
-# ==========================================================
+# =====================================================
+# TABS (NO LONG SCROLL)
+# =====================================================
 
 tab1, tab2, tab3 = st.tabs([
-    "Patient Overview",
-    "Disease Breakdown",
-    "Cohort Analytics"
+    "Patient Summary",
+    "Disease-Specific Severity",
+    "Cohort Distribution"
 ])
 
-# ==========================================================
-# TAB 1 – PATIENT OVERVIEW
-# ==========================================================
+# =====================================================
+# TAB 1 – PATIENT SUMMARY
+# =====================================================
 
 with tab1:
 
-    st.markdown("<div class='section-title'>Patient Overview</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>Patient Information</div>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown(f"<div class='metric-large'>Subject ID: {patient['subject_id']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='metric-large'>Admission ID: {patient['hadm_id']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='big-text'><b>Subject ID:</b> {patient['subject_id']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='big-text'><b>Admission ID:</b> {patient['hadm_id']}</div>", unsafe_allow_html=True)
 
         diseases = []
         if patient["has_ckd"]:
-            diseases.append("CKD")
+            diseases.append("Chronic Kidney Disease")
         if patient["has_diabetes"]:
-            diseases.append("Diabetes")
+            diseases.append("Diabetes Mellitus")
         if patient["has_thyroid"]:
-            diseases.append("Thyroid")
+            diseases.append("Thyroid Disorder")
 
-        st.markdown(f"<div class='metric-large'>Chronic Conditions: {', '.join(diseases)}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='big-text'><b>Chronic Conditions:</b> {', '.join(diseases)}</div>", unsafe_allow_html=True)
 
     with col2:
-        severity = patient["final_severity_label"]
-        score = patient["final_severity_score"]
+        st.markdown("<div class='section-title'>Final Lab Severity</div>", unsafe_allow_html=True)
 
-        st.markdown(f"""
-        <div style="
-            font-size:40px;
-            font-weight:700;
-            color:#1F2937;">
-            Final Severity: {severity}
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"<div class='big-text'><b>Severity Label:</b> {patient['final_severity_label']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='big-text'><b>Severity Score:</b> {patient['final_severity_score']}</div>", unsafe_allow_html=True)
 
-        st.markdown(f"""
-        <div style="
-            font-size:28px;
-            margin-top:10px;">
-            Severity Score: {score}
-        </div>
-        """, unsafe_allow_html=True)
-
-    # Optional Image Insert
-    st.markdown("### Laboratory Module")
-    st.image("https://images.unsplash.com/photo-1582719478250-c89cae4dc85b",
-             use_container_width=True)
-
-# ==========================================================
+# =====================================================
 # TAB 2 – DISEASE BREAKDOWN
-# ==========================================================
+# =====================================================
 
 with tab2:
 
@@ -135,20 +114,20 @@ with tab2:
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown("### CKD")
-        st.markdown(f"<div class='metric-large'>{patient.get('ckd_severity', 'N/A')}</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-text'><b>CKD Severity</b></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='big-text'>{patient.get('ckd_severity', 'Not Available')}</div>", unsafe_allow_html=True)
 
     with col2:
-        st.markdown("### Diabetes")
-        st.markdown(f"<div class='metric-large'>{patient.get('diabetes_severity_final', 'N/A')}</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-text'><b>Diabetes Severity</b></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='big-text'>{patient.get('diabetes_severity_final', 'Not Available')}</div>", unsafe_allow_html=True)
 
     with col3:
-        st.markdown("### Thyroid")
-        st.markdown(f"<div class='metric-large'>{patient.get('thyroid_severity_final', 'N/A')}</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-text'><b>Thyroid Severity</b></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='big-text'>{patient.get('thyroid_severity_final', 'Not Available')}</div>", unsafe_allow_html=True)
 
-# ==========================================================
-# TAB 3 – COHORT ANALYTICS
-# ==========================================================
+# =====================================================
+# TAB 3 – COHORT DISTRIBUTION
+# =====================================================
 
 with tab3:
 
@@ -166,11 +145,11 @@ with tab3:
     distribution.columns = ["Severity", "Count"]
 
     color_map = {
-        "Stable": "#2ECC71",
-        "Mild": "#F1C40F",
-        "Moderate": "#E67E22",
-        "Severe": "#E74C3C",
-        "Unknown": "#9CA3AF"
+        "Stable": "#2E8B57",
+        "Mild": "#FFD700",
+        "Moderate": "#FF8C00",
+        "Severe": "#B22222",
+        "Unknown": "#708090"
     }
 
     fig = px.bar(
@@ -183,10 +162,10 @@ with tab3:
     )
 
     fig.update_layout(
-        template="plotly_white",
+        template="simple_white",
         showlegend=False,
-        font=dict(size=18),
-        height=500
+        font=dict(size=20),
+        height=550
     )
 
     fig.update_traces(textposition="outside")
@@ -199,8 +178,6 @@ with tab3:
     available = df["final_severity_label"].notna().sum()
     coverage = round((available / total) * 100, 2)
 
-    colA, colB, colC = st.columns(3)
-
-    colA.metric("Total Chronic Admissions", total)
-    colB.metric("Severity Available", available)
-    colC.metric("Coverage (%)", coverage)
+    st.markdown(f"<div class='big-text'><b>Total Chronic Admissions:</b> {total}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='big-text'><b>Severity Available:</b> {available}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='big-text'><b>Coverage:</b> {coverage}%</div>", unsafe_allow_html=True)
